@@ -1,4 +1,4 @@
-/* sevenrooms-widget.js v7.7 - Modal Mobile Layout Fix */
+/* sevenrooms-widget.js v7.9 - Stacked Layout Enforcement Fix */
 (function() {
 
     // --- 1. ENGINE DEFAULTS ---
@@ -59,11 +59,16 @@
         /* LAYOUT */
         .srf-form { display: flex; flex-direction: column; gap: 0; }
         .srf-form-group { width: 100%; margin-bottom: var(--srf-margin-form-group); }
-        .srf-layout-stacked .srf-form-group { margin-bottom: 0.5rem; }
+        
+        /* FIX: Enforce Stacked Layout Strictness to prevent inlining */
+        .srf-layout-stacked .srf-form { flex-direction: column !important; }
+        .srf-layout-stacked .srf-form-group { width: 100% !important; max-width: 100% !important; flex: 0 0 auto !important; margin-bottom: 0.5rem; }
+        
         .srf-layout-stacked .srf-submit-group label { display: none; }
         .srf-layout-stacked .srf-submit-group { margin-top: 0.5rem; }
         .sevenrooms-widget-container.srf-layout-stacked { padding: 25px; }
         .srf-layout-stacked h2 { margin-bottom: 0.5rem; } 
+        
         @media (min-width: 768px) {
             .srf-layout-horizontal .srf-form { flex-direction: row; align-items: flex-end; gap: 1rem; }
             .srf-layout-horizontal .srf-form-group { margin-bottom: 0; flex: 1; }
@@ -72,7 +77,9 @@
         }
 
         /* DROPDOWNS & MODALS */
-        .srf-time-dropdown { display: none; position: absolute; background-color: var(--srf-bg); color: var(--srf-text); border: 1px solid var(--srf-border); border-radius: var(--srf-radius); box-shadow: 0 10px 25px rgba(0,0,0,0.3); z-index: 999999; max-height: 300px; flex-direction: column; overflow: hidden; font-family: var(--srf-body-font); }
+        /* FIX: Added box-sizing: border-box here to prevent mobile alignment issues */
+        .srf-time-dropdown { display: none; position: absolute; background-color: var(--srf-bg); color: var(--srf-text); border: 1px solid var(--srf-border); border-radius: var(--srf-radius); box-shadow: 0 10px 25px rgba(0,0,0,0.3); z-index: 999999; max-height: 300px; flex-direction: column; overflow: hidden; font-family: var(--srf-body-font); box-sizing: border-box; }
+        .srf-time-dropdown * { box-sizing: border-box; }
         .srf-time-dropdown.srf-visible { display: flex; }
         .srf-time-list-wrapper { overflow-y: auto; flex-grow: 1; max-height: 220px; }
         .srf-time-list-item { padding: 0.75rem 1.5rem; text-align: center; font-size: 1rem; cursor: pointer; border-bottom: 1px solid var(--srf-border); font-weight: 600; background-color: var(--srf-bg); }
