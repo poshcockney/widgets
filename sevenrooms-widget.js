@@ -1,4 +1,4 @@
-/* sevenrooms-widget.js v7.10 - Legacy Row Safety Fix */
+/* sevenrooms-widget.js v7.11 - Fix Modal Visibility */
 (function() {
 
     // --- 1. ENGINE DEFAULTS ---
@@ -94,9 +94,12 @@
         .srf-halo-label { flex-grow: 1; text-align: center; padding: 0.5rem 0.25rem; border-radius: var(--srf-radius); background-color: var(--srf-input-bg); color: var(--srf-text); font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: background-color 0.2s ease; }
         .srf-halo-input:checked + .srf-halo-label { background-color: var(--cfg-accent-main); color: var(--srf-btn-text); }
 
-        /* MODAL OVERLAY - Added box-sizing: border-box to fix mobile padding issue */
+        /* MODAL OVERLAY */
         .srf-modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); z-index: 2147483647; align-items: center; justify-content: center; padding: 1rem; box-sizing: border-box; }
         .srf-modal-overlay * { box-sizing: border-box; }
+        
+        /* RESTORED MISSING VISIBILITY CLASS */
+        .srf-modal-overlay.srf-visible { display: flex; }
 
         .srf-results-modal-content { background-color: var(--srf-bg); color: var(--srf-text); font-family: var(--srf-body-font); width: 100%; max-width: 800px; max-height: 90vh; border-radius: var(--srf-radius); display: flex; flex-direction: column; position: relative; border: 1px solid var(--srf-border); }
         .srf-modal-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; border-bottom: 1px solid var(--srf-border); }
