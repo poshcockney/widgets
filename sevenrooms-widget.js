@@ -1,4 +1,4 @@
-/* sevenrooms-widget.js v7.18 - Configurable Hidden Areas */
+/* sevenrooms-widget.js v7.20 - Add Venue Name to Modal Summary */
 (function() {
 
     // --- 1. ENGINE DEFAULTS ---
@@ -475,7 +475,15 @@
             if(isManual) { submitBtn.textContent = 'Checking...'; submitBtn.disabled = true; }
             modal.classList.add('srf-visible'); spinner.style.display = 'block'; slotsGrid.style.display = 'none'; errorMsg.style.display = 'none';
             const dateStr = new Date(dateInput.value).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-            modalSummary.textContent = `${partyInput.value} Ppl, ${dateStr}, ${timeTrigger.textContent}`;
+            
+            // --- NEW: Add Clean Venue Name to Summary ---
+            const currentVenue = CONFIG.VENUES_LIST.find(v => v.id === CONFIG.VENUE_ID);
+            let venueDisplayName = currentVenue ? currentVenue.name : '';
+            // Clean brand names
+            venueDisplayName = venueDisplayName.replace(/Vivat Bacchus\s*/i, "").replace(/Humble Grape\s*/i, "").trim();
+            
+            modalSummary.textContent = `${partyInput.value} Ppl, ${dateStr}, ${timeTrigger.textContent}, ${venueDisplayName}`;
+            
             const payload = { venueId: CONFIG.VENUE_ID, partySize: parseInt(partyInput.value), date: dateInput.value, timeSlot: timeSlotInput.value === '_all_' ? '16:00' : timeSlotInput.value, haloInterval: timeSlotInput.value === '_all_' ? 900 : parseInt(haloInput.value) };
             try {
                 const res = await fetch(ENGINE_DEFAULTS.API_URL, { method: 'POST', body: JSON.stringify(payload) });
@@ -545,15 +553,24 @@
                     // UPDATED: Use isSpecial to prevent special offers from being filtered by time
                     if(timeSlotInput.value !== '_all_' && (sMin < targetMin || sMin > targetMax) && !isSpecial) return;
                     const btn = document.createElement('a'); btn.className = 'srf-slot-button'; btn.textContent = slot.time_formatted;
-                    const vConfig = CONFIG.VENUES_LIST.find(v => v.id === CONFIG.VENUE_ID) || {};
                     
-                    // FIXED: Auto-correct 'checkour' typo if present in config
-                    let path = vConfig.path || 'checkout';
-                    if (path === 'checkour') path = 'checkout';
-                    // REMOVED: Force 'upgrades' to 'checkout'. Now we respect the config.
+                    // --- NEW DYNAMIC PATH LOGIC (v7.19) ---
+                    // Determine path based on token existence instead of static config
+                    // Token exists -> 'upgrades'
+                    // Token is null/missing -> 'checkout'
+                    const path = slot.token ? 'upgrades' : 'checkout';
 
-                    // ADDED: Include timeslot_time param to support deep linking on upgrades page (like OG code)
-                    btn.href = `https://www.sevenrooms.com/explore/${CONFIG.VENUE_ID}/reservations/create/${path}/?venues=${CONFIG.VENUE_ID}&date=${dateInput.value}&timeslot_id=${slot.token}&timeslot_time=${slot.time_iso.substring(11, 16)}&party_size=${partyInput.value}`;
+                    let url = `https://www.sevenrooms.com/explore/${CONFIG.VENUE_ID}/reservations/create/${path}/?venues=${CONFIG.VENUE_ID}&date=${dateInput.value}&party_size=${partyInput.value}`;
+                    
+                    // Only append token if it exists (for upgrades path)
+                    if (slot.token) {
+                        url += `&timeslot_id=${slot.token}`;
+                    }
+                    
+                    // Always append time parameter
+                    url += `&timeslot_time=${slot.time_iso.substring(11, 16)}`;
+
+                    btn.href = url;
                     btn.target = "_blank"; gridDiv.appendChild(btn); count++;
                 });
                 if(count > 0) {
