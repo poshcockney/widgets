@@ -1,4 +1,4 @@
-/* sevenrooms-widget.js v7.17 - Restore Upgrades Path & Add Time Param */
+/* sevenrooms-widget.js v7.18 - Configurable Hidden Areas */
 (function() {
 
     // --- 1. ENGINE DEFAULTS ---
@@ -7,9 +7,8 @@
         FONTS: {
             title: "'Poppins', sans-serif",
             body: "'Poppins', sans-serif"
-        },
-        // Areas to explicitly hide (Internal/Walk-in only areas that return bad links)
-        HIDDEN_AREAS: ['standard seating', 'outside terrace']
+        }
+        // Removed hardcoded HIDDEN_AREAS. Now controlled via window.SR_WIDGET_CONFIG
     };
 
     // --- 2. CSS INJECTOR ---
@@ -249,6 +248,15 @@
             localVenuesList = allVenues.filter(v => v.brand === brandKey);
         }
 
+        // --- NEW: Resolve Hidden Areas from Global Config or Data Attribute ---
+        let hiddenAreas = window.SR_WIDGET_CONFIG.HIDDEN_AREAS || [];
+        const attrHidden = container.getAttribute('data-hidden-areas');
+        if (attrHidden) {
+             hiddenAreas = attrHidden.split(',').map(s => s.trim());
+        }
+        // Normalize to lowercase for case-insensitive matching
+        hiddenAreas = hiddenAreas.map(s => s.toLowerCase());
+
         const themeFonts = theme.fonts || {};
         const CONFIG = {
             VENUE_ID: container.dataset.venueId || (localVenuesList[0] ? localVenuesList[0].id : ''),
@@ -268,7 +276,8 @@
                 titleUrl: themeFonts.titleUrl,
                 body:  container.dataset.fontBody || themeFonts.body || ENGINE_DEFAULTS.FONTS.body,
                 url:   container.dataset.fontUrl || themeFonts.url
-            }
+            },
+            HIDDEN_AREAS: hiddenAreas // Add to config
         };
 
         const applyStyles = (element) => {
@@ -510,8 +519,8 @@
             });
 
             areaNames.forEach(areaName => {
-                // FIXED: Filter out hidden areas (Standard Seating, Outside Terrace) based on the config list
-                if (ENGINE_DEFAULTS.HIDDEN_AREAS.some(hidden => areaName.toLowerCase().includes(hidden))) return;
+                // FIXED: Filter out hidden areas based on the dynamic CONFIG.HIDDEN_AREAS
+                if (CONFIG.HIDDEN_AREAS.some(hidden => areaName.toLowerCase().includes(hidden))) return;
 
                 const slots = venueData[areaName];
                 let targetMin = -1, targetMax = -1;
