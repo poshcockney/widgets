@@ -1,4 +1,4 @@
-/* sevenrooms-widget.js v7.9 - Stacked Layout Enforcement Fix */
+/* sevenrooms-widget.js v7.10 - Legacy Row Safety Fix */
 (function() {
 
     // --- 1. ENGINE DEFAULTS ---
@@ -64,6 +64,9 @@
         .srf-layout-stacked .srf-form { flex-direction: column !important; }
         .srf-layout-stacked .srf-form-group { width: 100% !important; max-width: 100% !important; flex: 0 0 auto !important; margin-bottom: 0.5rem; }
         
+        /* SAFETY FIX: Neutralize legacy/cached .srf-row wrappers in stacked mode */
+        .srf-layout-stacked .srf-row { display: block !important; width: 100% !important; margin: 0 !important; padding: 0 !important; }
+
         .srf-layout-stacked .srf-submit-group label { display: none; }
         .srf-layout-stacked .srf-submit-group { margin-top: 0.5rem; }
         .sevenrooms-widget-container.srf-layout-stacked { padding: 25px; }
@@ -164,7 +167,7 @@
         
         /* ADDED: Enforce exact white for dark mode calendar text elements */
         .flatpickr-calendar.srf-fp-instance.srf-theme-dark .flatpickr-current-month,
-        .flatpickr-calendar.srf-fp-instance.srf-theme-dark .flatpickr-current-month .flatpickr-monthDropdown-months,
+        .flatpickr-calendar.srf-fp-instance.srf-theme-dark .flatpickr-monthDropdown-months,
         .flatpickr-calendar.srf-fp-instance.srf-theme-dark .flatpickr-current-month input.cur-year,
         .flatpickr-calendar.srf-fp-instance.srf-theme-dark span.flatpickr-weekday,
         .flatpickr-calendar.srf-fp-instance.srf-theme-dark .flatpickr-day:not(.selected) { color: #ffffff !important; }
