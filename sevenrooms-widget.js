@@ -1,4 +1,4 @@
-/* sevenrooms-widget.js v7.12 - Anti-Layout Shift Fix */
+/* sevenrooms-widget.js v7.14 - Debug Mode & Raw Values */
 (function() {
 
     // --- 1. ENGINE DEFAULTS ---
@@ -469,6 +469,16 @@
             try {
                 const res = await fetch(ENGINE_DEFAULTS.API_URL, { method: 'POST', body: JSON.stringify(payload) });
                 const data = await res.json();
+                
+                // --- DEBUG LOGGING ---
+                console.log("--- SEVENROOMS API DEBUG ---");
+                console.log("Raw Response:", data);
+                if (data.groupedByVenue) {
+                    const debugVenueData = data.groupedByVenue[CONFIG.VENUE_ID] || Object.values(data.groupedByVenue)[0];
+                    console.log("Area Names found:", Object.keys(debugVenueData));
+                }
+                // ---------------------
+
                 if (data.groupedByVenue) renderSlots(data.groupedByVenue); else throw new Error('No data');
             } catch (e) { spinner.style.display = 'none'; errorMsg.style.display = 'block'; errorMsg.textContent = "Unavailable. Please try again."; } 
             finally { if(isManual) { submitBtn.textContent = 'SEARCH'; submitBtn.disabled = false; } }
@@ -498,6 +508,9 @@
             });
 
             areaNames.forEach(areaName => {
+                // [DEBUG MODE] Commented out the filter so you can inspect raw names in console
+                // if (areaName.toLowerCase() === 'standard seating') return;
+
                 const slots = venueData[areaName];
                 let targetMin = -1, targetMax = -1;
                 if(timeSlotInput.value !== '_all_') { const [h, m] = timeSlotInput.value.split(':').map(Number); const minutes = h * 60 + m; const hInt = parseInt(haloInput.value); targetMin = minutes - hInt; targetMax = minutes + hInt; }
