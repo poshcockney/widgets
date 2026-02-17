@@ -1,4 +1,4 @@
-/* sevenrooms-widget.js v7.14 - Debug Mode & Raw Values */
+/* sevenrooms-widget.js v7.17 - Restore Upgrades Path & Add Time Param */
 (function() {
 
     // --- 1. ENGINE DEFAULTS ---
@@ -7,7 +7,9 @@
         FONTS: {
             title: "'Poppins', sans-serif",
             body: "'Poppins', sans-serif"
-        }
+        },
+        // Areas to explicitly hide (Internal/Walk-in only areas that return bad links)
+        HIDDEN_AREAS: ['standard seating', 'outside terrace']
     };
 
     // --- 2. CSS INJECTOR ---
@@ -508,8 +510,8 @@
             });
 
             areaNames.forEach(areaName => {
-                // [DEBUG MODE] Commented out the filter so you can inspect raw names in console
-                // if (areaName.toLowerCase() === 'standard seating') return;
+                // FIXED: Filter out hidden areas (Standard Seating, Outside Terrace) based on the config list
+                if (ENGINE_DEFAULTS.HIDDEN_AREAS.some(hidden => areaName.toLowerCase().includes(hidden))) return;
 
                 const slots = venueData[areaName];
                 let targetMin = -1, targetMax = -1;
@@ -535,8 +537,14 @@
                     if(timeSlotInput.value !== '_all_' && (sMin < targetMin || sMin > targetMax) && !isSpecial) return;
                     const btn = document.createElement('a'); btn.className = 'srf-slot-button'; btn.textContent = slot.time_formatted;
                     const vConfig = CONFIG.VENUES_LIST.find(v => v.id === CONFIG.VENUE_ID) || {};
-                    const path = vConfig.path || 'checkout';
-                    btn.href = `https://www.sevenrooms.com/explore/${CONFIG.VENUE_ID}/reservations/create/${path}/?venues=${CONFIG.VENUE_ID}&date=${dateInput.value}&timeslot_id=${slot.token}&party_size=${partyInput.value}`;
+                    
+                    // FIXED: Auto-correct 'checkour' typo if present in config
+                    let path = vConfig.path || 'checkout';
+                    if (path === 'checkour') path = 'checkout';
+                    // REMOVED: Force 'upgrades' to 'checkout'. Now we respect the config.
+
+                    // ADDED: Include timeslot_time param to support deep linking on upgrades page (like OG code)
+                    btn.href = `https://www.sevenrooms.com/explore/${CONFIG.VENUE_ID}/reservations/create/${path}/?venues=${CONFIG.VENUE_ID}&date=${dateInput.value}&timeslot_id=${slot.token}&timeslot_time=${slot.time_iso.substring(11, 16)}&party_size=${partyInput.value}`;
                     btn.target = "_blank"; gridDiv.appendChild(btn); count++;
                 });
                 if(count > 0) {
