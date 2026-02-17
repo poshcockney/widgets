@@ -1,4 +1,4 @@
-/* sevenrooms-widget.js v7.11 - Fix Modal Visibility */
+/* sevenrooms-widget.js v7.12 - Anti-Layout Shift Fix */
 (function() {
 
     // --- 1. ENGINE DEFAULTS ---
@@ -25,6 +25,19 @@
         .srf-theme-dark { --srf-bg: var(--cfg-bg-dark); --srf-text: var(--cfg-bg-light); --srf-input-bg: rgba(255, 255, 255, 0.1); --srf-input-text: #ffffff; --srf-border: color-mix(in srgb, var(--cfg-bg-light), transparent 80%); --srf-btn-text: var(--cfg-bg-light); --srf-slot-bg: var(--cfg-accent-main); --srf-slot-text: var(--cfg-bg-light); }
 
         /* STRUCTURE */
+        /* ADDED: Anti-CLS Styles to prevent page jumping during reload */
+        .sevenrooms-widget-target { 
+            display: block; 
+            min-height: 460px; /* Approximate height for stacked/mobile layout */
+            box-sizing: border-box;
+            transition: min-height 0.2s ease;
+        }
+        @media (min-width: 768px) {
+            .sevenrooms-widget-target[data-layout="horizontal"] { 
+                min-height: 210px; /* Approximate height for desktop horizontal layout */
+            }
+        }
+
         .sevenrooms-widget-container { 
             background-color: var(--srf-bg); 
             color: var(--srf-text); 
