@@ -1,4 +1,4 @@
-/* sevenrooms-widget.js v7.20 - Add Venue Name to Modal Summary */
+/* sevenrooms-widget.js v7.21 - Dynamic Path based on Upsell Categories */
 (function() {
 
     // --- 1. ENGINE DEFAULTS ---
@@ -554,15 +554,17 @@
                     if(timeSlotInput.value !== '_all_' && (sMin < targetMin || sMin > targetMax) && !isSpecial) return;
                     const btn = document.createElement('a'); btn.className = 'srf-slot-button'; btn.textContent = slot.time_formatted;
                     
-                    // --- NEW DYNAMIC PATH LOGIC (v7.19) ---
-                    // Determine path based on token existence instead of static config
-                    // Token exists -> 'upgrades'
-                    // Token is null/missing -> 'checkout'
-                    const path = slot.token ? 'upgrades' : 'checkout';
+                    // --- NEW DYNAMIC PATH LOGIC (v7.21) ---
+                    // Strategy: 
+                    // 1. If upsell_categories has items -> 'upgrades'
+                    // 2. If upsell_categories is empty -> 'checkout'
+                    // This replaces the old token-based or config-based logic.
+                    const hasUpsells = slot.upsell_categories && slot.upsell_categories.length > 0;
+                    const path = hasUpsells ? 'upgrades' : 'checkout';
 
                     let url = `https://www.sevenrooms.com/explore/${CONFIG.VENUE_ID}/reservations/create/${path}/?venues=${CONFIG.VENUE_ID}&date=${dateInput.value}&party_size=${partyInput.value}`;
                     
-                    // Only append token if it exists (for upgrades path)
+                    // Only append token if it exists (SevenRooms usually provides this for both upgrade/standard slots)
                     if (slot.token) {
                         url += `&timeslot_id=${slot.token}`;
                     }
