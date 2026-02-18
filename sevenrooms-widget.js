@@ -552,6 +552,11 @@
                     const [sh, sm] = slot.time_iso.substring(11, 16).split(':').map(Number); const sMin = sh * 60 + sm;
                     // UPDATED: Use isSpecial to prevent special offers from being filtered by time
                     if(timeSlotInput.value !== '_all_' && (sMin < targetMin || sMin > targetMax) && !isSpecial) return;
+                    
+                    // --- NEW: Safety check - Skip invalid slots ---
+                    // Backend now filters these, but this is a double safety check
+                    if (!slot.token) return;
+
                     const btn = document.createElement('a'); btn.className = 'srf-slot-button'; btn.textContent = slot.time_formatted;
                     
                     // --- NEW DYNAMIC PATH LOGIC (v7.21) ---
