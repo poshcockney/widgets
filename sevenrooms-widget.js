@@ -1,4 +1,4 @@
-/* sevenrooms-widget.js v7.21 - Dynamic Path based on Upsell Categories */
+/* sevenrooms-widget.js v7.22 - Configurable Start Time */
 (function() {
 
     // --- 1. ENGINE DEFAULTS ---
@@ -265,6 +265,8 @@
             THEME: container.dataset.theme || 'dark',
             LAYOUT: container.dataset.layout || 'stacked',
             TITLE: container.dataset.title || 'Book A Table',
+            // NEW: Allow overwrite of start time (default 12:00)
+            START_TIME: container.dataset.startTime || '12:00',
             COLORS: {
                 accentMain: container.dataset.colorAccentMain || theme.accentMain,
                 accentSec:  container.dataset.colorAccentSec || theme.accentSec,
@@ -451,7 +453,16 @@
             timeListWrapper.innerHTML = '';
             const addTime = (val, text) => { const div = document.createElement('div'); div.className = `srf-time-list-item`; div.textContent = text; div.dataset.time = val; if(val==='_all_') div.classList.add('srf-selected'); div.onclick = (e) => { e.stopPropagation(); timeSlotInput.value = val; updateTimeButton(); toggleDropdown(false); if (modal.classList.contains('srf-visible')) runSearch(false); }; timeListWrapper.appendChild(div); };
             addTime('_all_', 'All Times');
-            let curr = new Date(); curr.setHours(12,0,0,0); const end = new Date(); end.setHours(23,0,0,0);
+            
+            // NEW: Parse start time from config
+            const [startH, startM] = CONFIG.START_TIME.split(':').map(Number);
+
+            let curr = new Date(); 
+            curr.setHours(startH, startM || 0, 0, 0); 
+            
+            const end = new Date(); 
+            end.setHours(23,0,0,0);
+            
             while(curr <= end) { addTime(curr.toTimeString().substring(0,5), curr.toTimeString().substring(0,5)); curr.setMinutes(curr.getMinutes() + 30); }
         }
         populateTimeList();
