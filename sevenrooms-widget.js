@@ -1,4 +1,4 @@
-/* sevenrooms-widget.js v7.24 - Updated Field Labels & Smart Fallback */
+/* sevenrooms-widget.js v7.25 - Dark Mode Fixes & Past Dates Greyed Out */
 (function() {
 
     // --- 1. ENGINE DEFAULTS ---
@@ -194,6 +194,26 @@
         /* ADDED: Fix for dark mode dropdown backgrounds (Month Selector) */
         .flatpickr-calendar.srf-fp-instance.srf-theme-dark .flatpickr-monthDropdown-months { background-color: var(--srf-bg) !important; }
         .flatpickr-calendar.srf-fp-instance.srf-theme-dark .flatpickr-monthDropdown-months option { background-color: var(--srf-bg); color: #ffffff; }
+
+        /* NEW: Dark Mode Hover Fix - Override default white hover with semi-transparent white */
+        .flatpickr-calendar.srf-fp-instance.srf-theme-dark .flatpickr-day:hover,
+        .flatpickr-calendar.srf-fp-instance.srf-theme-dark .flatpickr-day:focus {
+            background-color: rgba(255, 255, 255, 0.2) !important;
+            border-color: transparent !important;
+        }
+
+        /* NEW: Past Dates Greyed Out */
+        .flatpickr-calendar.srf-fp-instance .flatpickr-day.flatpickr-disabled,
+        .flatpickr-calendar.srf-fp-instance .flatpickr-day.flatpickr-disabled:hover {
+            color: var(--srf-text) !important;
+            opacity: 0.3 !important;
+            background: transparent !important;
+            cursor: default !important;
+        }
+        /* Specific override for dark mode disabled text to ensure contrast before opacity */
+        .flatpickr-calendar.srf-fp-instance.srf-theme-dark .flatpickr-day.flatpickr-disabled {
+            color: #ffffff !important; 
+        }
         `;
         const styleSheet = document.createElement("style");
         styleSheet.id = "srf-custom-styles";
