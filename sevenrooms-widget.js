@@ -1,4 +1,4 @@
-/* sevenrooms-widget.js v7.25 - Dark Mode Fixes & Past Dates Greyed Out */
+/* sevenrooms-widget.js v7.26 - Swap Hover Opacity */
 (function() {
 
     // --- 1. ENGINE DEFAULTS ---
@@ -155,8 +155,9 @@
         .srf-slots-subgrid { display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 0.75rem; padding-bottom: 0.75rem; }
         .srf-slots-subgrid::-webkit-scrollbar { height: 6px; }
         .srf-slots-subgrid::-webkit-scrollbar-thumb { background: var(--srf-border); border-radius: var(--srf-radius); }
-        .srf-slot-button { flex: 0 0 auto; min-width: 100px; height: 3rem; background-color: var(--srf-slot-bg); color: var(--srf-slot-text); border-radius: var(--srf-radius); display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.2s; opacity: 0.85; }
-        .srf-slot-button:hover { opacity: 1; transform: translateY(-1px); }
+        /* SWAPPED OPACITY: Full opacity by default, 85% on hover */
+        .srf-slot-button { flex: 0 0 auto; min-width: 100px; height: 3rem; background-color: var(--srf-slot-bg); color: var(--srf-slot-text); border-radius: var(--srf-radius); display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.2s; opacity: 1; }
+        .srf-slot-button:hover { opacity: 0.85; transform: translateY(-1px); }
 
         .srf-show-all-times-wrapper, .srf-other-dates-wrapper, .srf-other-locations-wrapper { margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--srf-border); }
         .srf-show-all-times-button { background-color: var(--cfg-accent-main); color: var(--srf-btn-text); font-weight: 600; border: none; padding: 0.75rem 1.5rem; border-radius: var(--srf-radius); cursor: pointer; display: block; margin: 0 auto; }
