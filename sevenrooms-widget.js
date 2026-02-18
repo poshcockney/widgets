@@ -1,4 +1,4 @@
-/* sevenrooms-widget.js v7.22 - Configurable Start Time */
+/* sevenrooms-widget.js v7.23 - Smart Fallback & No-Results Handling */
 (function() {
 
     // --- 1. ENGINE DEFAULTS ---
@@ -517,97 +517,145 @@
         function renderSlots(data) {
             spinner.style.display = 'none'; slotsGrid.innerHTML = '';
             const venueData = data[CONFIG.VENUE_ID] || Object.values(data)[0];
-            if (!venueData || Object.keys(venueData).length === 0) { slotsGrid.innerHTML = '<p style="text-align:center; opacity:0.7;">No tables found.</p>'; slotsGrid.style.display = 'block'; otherDatesBtn.click(); return; }
+            
+            // --- SMART FALLBACK LOGIC ---
+            // 1. Identify valid/visible areas first
+            const areaNames = venueData ? Object.keys(venueData) : [];
+            const visibleAreas = areaNames.filter(areaName => 
+                !CONFIG.HIDDEN_AREAS.some(hidden => areaName.toLowerCase().includes(hidden))
+            );
 
-            const areaNames = Object.keys(venueData);
-            // --- SMART SORTING (UPDATED v6.9) ---
-            areaNames.sort((a, b) => {
-                const aLower = a.toLowerCase(), bLower = b.toLowerCase();
-                const getRank = (n) => { 
-                    // Force all special offers (containing "% off" or "special") to the top
-                    if (n.includes("% off") || n.includes("special")) return 0; // Rank 0 (highest)
-                    if (n.includes("wine")) return 2; 
-                    return 10; 
-                };
-                const rankA = getRank(aLower), rankB = getRank(bLower);
-                if (rankA !== rankB) return rankA - rankB;
-                const timeA = (venueData[a] && venueData[a].length > 0) ? venueData[a][0].time_iso : '9999';
-                const timeB = (venueData[b] && venueData[b].length > 0) ? venueData[b][0].time_iso : '9999';
-                if (timeA < timeB) return -1; if (timeA > timeB) return 1;
-                return aLower.localeCompare(bLower);
-            });
+            // 2. If NO valid areas at all for the day -> Show No Tables & Open Date Picker
+            if (!venueData || visibleAreas.length === 0) { 
+                slotsGrid.innerHTML = '<p style="text-align:center; opacity:0.7;">No tables found.</p>'; 
+                slotsGrid.style.display = 'block'; 
+                // Force open dropdown if closed
+                if(otherDatesList.style.display !== 'grid') otherDatesBtn.click(); 
+                return; 
+            }
 
-            areaNames.forEach(areaName => {
-                // FIXED: Filter out hidden areas based on the dynamic CONFIG.HIDDEN_AREAS
-                if (CONFIG.HIDDEN_AREAS.some(hidden => areaName.toLowerCase().includes(hidden))) return;
+            // 3. Helper to generate the grid content
+            const buildGridContent = (ignoreTimeFilter) => {
+                let totalButtons = 0;
+                const fragment = document.createDocumentFragment();
 
-                const slots = venueData[areaName];
-                let targetMin = -1, targetMax = -1;
-                if(timeSlotInput.value !== '_all_') { const [h, m] = timeSlotInput.value.split(':').map(Number); const minutes = h * 60 + m; const hInt = parseInt(haloInput.value); targetMin = minutes - hInt; targetMax = minutes + hInt; }
-                
-                // Fix: Case-insensitive check for styling and labels
-                const lowerName = areaName.toLowerCase();
-                const isSpecial = lowerName.includes('% off') || lowerName.includes('special');
+                // --- SMART SORTING (UPDATED v6.9) ---
+                visibleAreas.sort((a, b) => {
+                    const aLower = a.toLowerCase(), bLower = b.toLowerCase();
+                    const getRank = (n) => { 
+                        if (n.includes("% off") || n.includes("special")) return 0; 
+                        if (n.includes("wine")) return 2; 
+                        return 10; 
+                    };
+                    const rankA = getRank(aLower), rankB = getRank(bLower);
+                    if (rankA !== rankB) return rankA - rankB;
+                    const timeA = (venueData[a] && venueData[a].length > 0) ? venueData[a][0].time_iso : '9999';
+                    const timeB = (venueData[b] && venueData[b].length > 0) ? venueData[b][0].time_iso : '9999';
+                    if (timeA < timeB) return -1; if (timeA > timeB) return 1;
+                    return aLower.localeCompare(bLower);
+                });
 
-                const areaDiv = document.createElement('div'); 
-                areaDiv.className = `srf-area-container ${isSpecial ? 'srf-special-offer-area' : ''}`;
-                
-                const title = document.createElement('h3'); 
-                title.className = 'srf-area-heading'; 
-                // EXPLICITLY SETTING "Special Offer" TEXT
-                title.innerHTML = isSpecial ? `${areaName} <span class="srf-special-offer-label">Special Offer</span>` : areaName;
-                
-                const gridDiv = document.createElement('div'); gridDiv.className = 'srf-slots-subgrid';
-                let count = 0;
-                slots.forEach(slot => {
-                    const [sh, sm] = slot.time_iso.substring(11, 16).split(':').map(Number); const sMin = sh * 60 + sm;
-                    // UPDATED: Use isSpecial to prevent special offers from being filtered by time
-                    if(timeSlotInput.value !== '_all_' && (sMin < targetMin || sMin > targetMax) && !isSpecial) return;
+                visibleAreas.forEach(areaName => {
+                    const slots = venueData[areaName];
+                    let targetMin = -1, targetMax = -1;
                     
-                    // --- NEW: Safety check - Skip invalid slots ---
-                    // Backend now filters these, but this is a double safety check
-                    if (!slot.token) return;
-
-                    const btn = document.createElement('a'); btn.className = 'srf-slot-button'; btn.textContent = slot.time_formatted;
-                    
-                    // --- NEW DYNAMIC PATH LOGIC (v7.21) ---
-                    // Strategy: 
-                    // 1. If upsell_categories has items -> 'upgrades'
-                    // 2. If upsell_categories is empty -> 'checkout'
-                    // This replaces the old token-based or config-based logic.
-                    const hasUpsells = slot.upsell_categories && slot.upsell_categories.length > 0;
-                    const path = hasUpsells ? 'upgrades' : 'checkout';
-
-                    let url = `https://www.sevenrooms.com/explore/${CONFIG.VENUE_ID}/reservations/create/${path}/?venues=${CONFIG.VENUE_ID}&date=${dateInput.value}&party_size=${partyInput.value}`;
-                    
-                    // Only append token if it exists (SevenRooms usually provides this for both upgrade/standard slots)
-                    if (slot.token) {
-                        url += `&timeslot_id=${slot.token}`;
+                    // Filter Logic: Only apply if NOT ignoring time filter
+                    if(!ignoreTimeFilter && timeSlotInput.value !== '_all_') { 
+                        const [h, m] = timeSlotInput.value.split(':').map(Number); 
+                        const minutes = h * 60 + m; 
+                        const hInt = parseInt(haloInput.value); 
+                        targetMin = minutes - hInt; 
+                        targetMax = minutes + hInt; 
                     }
                     
-                    // Always append time parameter
-                    url += `&timeslot_time=${slot.time_iso.substring(11, 16)}`;
+                    const lowerName = areaName.toLowerCase();
+                    const isSpecial = lowerName.includes('% off') || lowerName.includes('special');
 
-                    btn.href = url;
-                    btn.target = "_blank"; gridDiv.appendChild(btn); count++;
+                    const areaDiv = document.createElement('div'); 
+                    areaDiv.className = `srf-area-container ${isSpecial ? 'srf-special-offer-area' : ''}`;
+                    
+                    const title = document.createElement('h3'); 
+                    title.className = 'srf-area-heading'; 
+                    title.innerHTML = isSpecial ? `${areaName} <span class="srf-special-offer-label">Special Offer</span>` : areaName;
+                    
+                    const gridDiv = document.createElement('div'); gridDiv.className = 'srf-slots-subgrid';
+                    let areaCount = 0;
+                    
+                    slots.forEach(slot => {
+                        const [sh, sm] = slot.time_iso.substring(11, 16).split(':').map(Number); const sMin = sh * 60 + sm;
+                        
+                        // Strict Filtering: If not ignoring time, check bounds. (Special offers bypass bounds if user wants)
+                        // Note: If ignoreTimeFilter is true, we skip this check entirely.
+                        if(!ignoreTimeFilter && timeSlotInput.value !== '_all_' && (sMin < targetMin || sMin > targetMax) && !isSpecial) return;
+                        
+                        if (!slot.token) return;
+
+                        const btn = document.createElement('a'); btn.className = 'srf-slot-button'; btn.textContent = slot.time_formatted;
+                        
+                        const hasUpsells = slot.upsell_categories && slot.upsell_categories.length > 0;
+                        const path = hasUpsells ? 'upgrades' : 'checkout';
+
+                        let url = `https://www.sevenrooms.com/explore/${CONFIG.VENUE_ID}/reservations/create/${path}/?venues=${CONFIG.VENUE_ID}&date=${dateInput.value}&party_size=${partyInput.value}`;
+                        
+                        if (slot.token) url += `&timeslot_id=${slot.token}`;
+                        url += `&timeslot_time=${slot.time_iso.substring(11, 16)}`;
+
+                        btn.href = url;
+                        btn.target = "_blank"; gridDiv.appendChild(btn); 
+                        areaCount++;
+                        totalButtons++;
+                    });
+
+                    if(areaCount > 0) {
+                        const header = document.createElement('div'); header.className = 'srf-area-header-row'; header.appendChild(title);
+                        const wrapper = document.createElement('div'); wrapper.className = 'srf-slots-subgrid-wrapper'; wrapper.appendChild(gridDiv);
+                        const controls = document.createElement('div'); controls.className = 'srf-scroll-controls';
+                        const l = document.createElement('button'); l.className = 'srf-scroll-btn'; l.innerHTML = '&lt;';
+                        const r = document.createElement('button'); r.className = 'srf-scroll-btn'; r.innerHTML = '&gt;';
+                        l.onclick = () => gridDiv.scrollBy({ left: -200, behavior: 'smooth' }); r.onclick = () => gridDiv.scrollBy({ left: 200, behavior: 'smooth' });
+                        controls.append(l, r); header.appendChild(controls);
+                        areaDiv.appendChild(header); areaDiv.appendChild(wrapper); fragment.appendChild(areaDiv);
+                        
+                        // Scroll Arrow Logic
+                        const checkArrows = () => {
+                            l.classList.toggle('srf-disabled', gridDiv.scrollLeft <= 0);
+                            r.classList.toggle('srf-disabled', gridDiv.scrollLeft + gridDiv.clientWidth >= gridDiv.scrollWidth - 1);
+                            areaDiv.classList.toggle('srf-hide-arrows', gridDiv.scrollWidth <= gridDiv.clientWidth);
+                        };
+                        gridDiv.addEventListener('scroll', checkArrows); setTimeout(checkArrows, 100); window.addEventListener('resize', checkArrows);
+                    }
                 });
-                if(count > 0) {
-                    const header = document.createElement('div'); header.className = 'srf-area-header-row'; header.appendChild(title);
-                    const wrapper = document.createElement('div'); wrapper.className = 'srf-slots-subgrid-wrapper'; wrapper.appendChild(gridDiv);
-                    const controls = document.createElement('div'); controls.className = 'srf-scroll-controls';
-                    const l = document.createElement('button'); l.className = 'srf-scroll-btn'; l.innerHTML = '&lt;';
-                    const r = document.createElement('button'); r.className = 'srf-scroll-btn'; r.innerHTML = '&gt;';
-                    l.onclick = () => gridDiv.scrollBy({ left: -200, behavior: 'smooth' }); r.onclick = () => gridDiv.scrollBy({ left: 200, behavior: 'smooth' });
-                    controls.append(l, r); header.appendChild(controls);
-                    areaDiv.appendChild(header); areaDiv.appendChild(wrapper); slotsGrid.appendChild(areaDiv);
-                    const checkArrows = () => {
-                        l.classList.toggle('srf-disabled', gridDiv.scrollLeft <= 0);
-                        r.classList.toggle('srf-disabled', gridDiv.scrollLeft + gridDiv.clientWidth >= gridDiv.scrollWidth - 1);
-                        areaDiv.classList.toggle('srf-hide-arrows', gridDiv.scrollWidth <= gridDiv.clientWidth);
-                    };
-                    gridDiv.addEventListener('scroll', checkArrows); setTimeout(checkArrows, 100); window.addEventListener('resize', checkArrows);
+                
+                return { count: totalButtons, content: fragment };
+            };
+
+            // 4. Try rendering with current filters
+            let result = buildGridContent(false);
+
+            // 5. Check Results & Apply Fallback
+            if (result.count === 0 && timeSlotInput.value !== '_all_') {
+                // FALLBACK: Time specific search failed, but venue has slots? Try rendering all.
+                const fallbackResult = buildGridContent(true);
+                
+                if (fallbackResult.count > 0) {
+                    // Success! Show All Times with a note.
+                    const dateStr = new Date(dateInput.value).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' });
+                    slotsGrid.innerHTML = `<p style="text-align:center; opacity:0.7; margin-bottom:1.5rem; font-style:italic;">No availability around ${timeTrigger.textContent.split('(')[0].trim()}. Showing all times for ${dateStr}.</p>`;
+                    slotsGrid.appendChild(fallbackResult.content);
+                } else {
+                    // Double Fail: Day is truly empty.
+                    slotsGrid.innerHTML = '<p style="text-align:center; opacity:0.7;">No tables found.</p>';
+                    if(otherDatesList.style.display !== 'grid') otherDatesBtn.click();
                 }
-            });
+            } else if (result.count === 0) {
+                // "All Times" search failed (Day is empty)
+                slotsGrid.innerHTML = '<p style="text-align:center; opacity:0.7;">No tables found.</p>';
+                if(otherDatesList.style.display !== 'grid') otherDatesBtn.click();
+            } else {
+                // Success: Standard render
+                slotsGrid.appendChild(result.content);
+            }
+
             slotsGrid.style.display = 'block';
             if(otherDatesWrapper) otherDatesWrapper.style.display = 'block';
             if(otherLocWrapper) otherLocWrapper.style.display = 'block';
