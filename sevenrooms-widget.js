@@ -1,4 +1,4 @@
-/* sevenrooms-widget.js v7.23 - Smart Fallback & No-Results Handling */
+/* sevenrooms-widget.js v7.24 - Updated Field Labels & Smart Fallback */
 (function() {
 
     // --- 1. ENGINE DEFAULTS ---
@@ -359,9 +359,9 @@
                         </div>
                     </div>` : ''}
 
-                    <div class="srf-form-group"><label>Party Size</label><div class="srf-select-wrapper"><select name="party-size" class="srf-input party-size-select"></select></div></div>
+                    <div class="srf-form-group"><label>Guests</label><div class="srf-select-wrapper"><select name="party-size" class="srf-input party-size-select"></select></div></div>
                     <div class="srf-form-group"><label>Date</label><div class="srf-date-wrapper"><input type="text" class="srf-input date-input" placeholder="Select a date..." required></div></div>
-                    <div class="srf-form-group srf-time-group"><label>Preferred Time</label><button type="button" class="srf-input srf-time-trigger-button">All Times</button><input type="hidden" name="time-slot" class="time-slot-input" value="_all_"><input type="hidden" name="halo-interval" class="halo-interval-input" value="60"></div>
+                    <div class="srf-form-group srf-time-group"><label>Time</label><button type="button" class="srf-input srf-time-trigger-button">All Times</button><input type="hidden" name="time-slot" class="time-slot-input" value="_all_"><input type="hidden" name="halo-interval" class="halo-interval-input" value="60"></div>
                     <div class="srf-form-group srf-submit-group">
                         <label class="srf-layout-horizontal-label">&nbsp;</label>
                         <button type="button" class="srf-button submit-btn">SEARCH</button>
