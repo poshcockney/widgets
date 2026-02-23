@@ -99,7 +99,7 @@
       /* Orientation classes applied by JS */
       #gdrive-pdf-box.is-landscape {
         aspect-ratio: 1.4 / 1;
-        height: auto;
+        height: 40vh !important; 
       }
       #gdrive-pdf-box.is-portrait {
         height: 85vh;
