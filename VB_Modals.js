@@ -83,25 +83,36 @@
 
       /* --- Specific Modal Tweaks --- */
       #pipedrive-box { max-width: 700px; height: 85vh; }
-      /* Keep Matterport at 95vh */
+      
       #matterport-modal-box { 
         max-width: 1100px; 
         height: 95vh; 
       }
 
-      /* Give the PDF box a landscape aspect ratio instead of a fixed height */
+      /* Base PDF box setup */
       #gdrive-pdf-box { 
         max-width: 1100px; 
         width: 100%;
-        aspect-ratio: 1.4 / 1; /* Matches a standard landscape document perfectly */
-        max-height: 90vh; /* Ensures it never gets taller than the screen on weirdly shaped monitors */
+        max-height: 90vh; 
       }
+
+      /* Orientation classes applied by JS */
+      #gdrive-pdf-box.is-landscape {
+        aspect-ratio: 1.4 / 1;
+        height: auto;
+      }
+      #gdrive-pdf-box.is-portrait {
+        height: 85vh;
+      }
+
       #klaviyo-box { max-width: 500px; background: #737a6a; /* Updated Brand Color */ }
        
-      /* Mobile PDF Height Override */
+      /* Mobile Overrides */
       @media (max-width: 640px) {
-        #gdrive-pdf-box { height: 80vh !important; }
+        /* Only force fixed height on portrait/scrolling PDFs */
+        #gdrive-pdf-box.is-portrait { height: 80vh !important; }
         #matterport-modal-box { height: 85vh !important; } 
+        /* landscape will maintain aspect-ratio to avoid black voids */
       }
 
       /* --- Pipedrive Iframe Styles --- */
@@ -253,21 +264,40 @@
         const gDriveModal = document.getElementById('gdrive-pdf-modal');
         const gDriveIframe = document.getElementById('gdrive-pdf-frame');
         const gDriveLoader = document.getElementById('gdrive-pdf-loader');
+        const gDriveBox = document.getElementById('gdrive-pdf-box');
 
-        // Helper to handle G-Drive loading state
+        // Text-based orientation detection
+        const landscapeMenus = [
+            "à la carte menu",
+            "a la carte menu",
+            "a la carte",
+            "main menu",
+            "food menu",
+            "sample menu"
+        ];
+
         function gDriveIframeLoadHandler() {
             if (gDriveLoader) gDriveLoader.style.display = 'none';
             if (gDriveIframe) gDriveIframe.removeEventListener('load', gDriveIframeLoadHandler);
         }
 
-        // Global listener for G-Drive Links
         document.body.addEventListener('click', function(event) {
             const link = event.target.closest('a');
-            // check if link contains drive.google.com/file/d/
             if (link && link.href.includes('drive.google.com/file/d/')) {
                 event.preventDefault();
 
-                if (!gDriveModal || !gDriveIframe) return;
+                if (!gDriveModal || !gDriveIframe || !gDriveBox) return;
+
+                // Extract Orientation from Link Text
+                const linkText = link.textContent.trim().toLowerCase();
+                let orientation = 'portrait'; // Default for Wine lists/long docs
+                if (landscapeMenus.includes(linkText) || link.href.includes('#landscape')) {
+                    orientation = 'landscape';
+                }
+
+                // Apply orientation class
+                gDriveBox.classList.remove('is-landscape', 'is-portrait');
+                gDriveBox.classList.add(`is-${orientation}`);
 
                 // Extract ID
                 const match = link.href.match(/file\/d\/([a-zA-Z0-9_-]+)/);
@@ -318,7 +348,6 @@
 
 
         /* === KLAVIYO LOGIC === */
-        // Updated selector to support both "join-newsletter" and "newsletter"
         const klaviyoLinks = document.querySelectorAll('a[href="#join-newsletter"], a[href="#newsletter"]'); 
         const klaviyoModal = document.getElementById('klaviyo-modal');
         const klaviyoLoader = document.getElementById('klaviyo-loader');
@@ -337,7 +366,6 @@
                     const script = document.createElement('script');
                     script.type = 'text/javascript';
                     script.async = true;
-                    // Klaviyo Company ID: RC8UeV
                     script.src = 'https://static.klaviyo.com/onsite/js/klaviyo.js?company_id=RC8UeV';
                     script.onload = () => {
                         if (klaviyoLoader) klaviyoLoader.style.display = 'none';
@@ -351,13 +379,10 @@
 
     function initAccordionFix() {
         document.addEventListener('click', function(e) {
-            // SAFETY: Ignore automated clicks
             if (!e.isTrusted) return;
-
             const clickedButton = e.target.closest('.accordion-item__click-target');
             const clickedInsideAccordion = e.target.closest('.sqs-block-accordion');
 
-            // SCENARIO A: User opens an Accordion (Close ALL others)
             if (clickedButton) {
                 setTimeout(function() {
                     const allOpenButtons = document.querySelectorAll('.accordion-item__click-target[aria-expanded="true"]');
@@ -368,7 +393,6 @@
                     });
                 }, 10);
             }
-            // SCENARIO B: User clicks background (Close EVERYTHING)
             else if (!clickedInsideAccordion) {
                 const allOpenButtons = document.querySelectorAll('.accordion-item__click-target[aria-expanded="true"]');
                 allOpenButtons.forEach(button => {
