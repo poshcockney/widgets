@@ -99,7 +99,7 @@
       /* Orientation classes applied by JS */
       #gdrive-pdf-box.is-landscape {
         aspect-ratio: 1.4 / 1;
-        height: 40vh !important; 
+        height: auto; 
       }
       #gdrive-pdf-box.is-portrait {
         height: 85vh;
@@ -114,6 +114,7 @@
 
         /* Only force fixed height on portrait/scrolling PDFs */
         #gdrive-pdf-box.is-portrait { height: 70vh !important; }
+         #gdrive-pdf-box.is-landscape { height: 45vh !important; }
         #matterport-modal-box { height: 85vh !important; } 
         /* landscape will maintain aspect-ratio to avoid black voids */
       }
