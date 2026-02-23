@@ -109,8 +109,11 @@
        
       /* Mobile Overrides */
       @media (max-width: 640px) {
+        /* Increase vertical padding to ensure short landscape modals have "air" above/below */
+        .custom-modal-container { padding: 50px 20px; }
+
         /* Only force fixed height on portrait/scrolling PDFs */
-        #gdrive-pdf-box.is-portrait { height: 80vh !important; }
+        #gdrive-pdf-box.is-portrait { height: 70vh !important; }
         #matterport-modal-box { height: 85vh !important; } 
         /* landscape will maintain aspect-ratio to avoid black voids */
       }
